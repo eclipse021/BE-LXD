@@ -26,7 +26,7 @@ services:
       SENTRY_DSN: ${SENTRY_DSN}
       DISCORD_ERROR_WEBHOOK_URL: ${DISCORD_ERROR_WEBHOOK_URL}
       hibernate_ddl_auto: update
-      JAVA_TOOL_OPTIONS: "-Xmx160m -XX:MaxMetaspaceSize=96m"
+      JAVA_TOOL_OPTIONS: "-Xmx160m"
     depends_on:
       redis:
         condition: service_healthy
@@ -60,7 +60,7 @@ services:
       SENTRY_DSN: ${SENTRY_DSN}
       DISCORD_ERROR_WEBHOOK_URL: ${DISCORD_ERROR_WEBHOOK_URL}
       hibernate_ddl_auto: update
-      JAVA_TOOL_OPTIONS: "-Xmx192m -XX:MaxMetaspaceSize=96m"
+      JAVA_TOOL_OPTIONS: "-Xmx192m"
     depends_on:
       redis:
         condition: service_healthy
