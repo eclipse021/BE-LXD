@@ -58,6 +58,10 @@ jwt:
 
 server:
   port: 8080
+  tomcat:
+    threads:
+      max: 40        
+      min-spare: 5
 
 urls:
   frontend: ${URLS_FRONTEND}
