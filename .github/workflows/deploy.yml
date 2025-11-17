@@ -116,22 +116,22 @@ jobs:
             SERVICE="app-dev"
             echo "Deploy target service: $SERVICE"
 
-            # 3) 업데이트할 서비스만 새 이미지로 교체
-            sudo docker compose -f "$STACK_FILE" pull "$SERVICE" --ignore-pull-failures
-            sudo docker compose -f "$STACK_FILE" up -d --force-recreate "$SERVICE"
-
-            # 4) 만약 스택 전체가 죽어 있다면(컨테이너 0개) → 전체 스택 복구
+            # 3) 현재 컨테이너 수 확인
             RUNNING_COUNT=$(sudo docker compose -f "$STACK_FILE" ps -q | wc -l || echo 0)
+            echo "Running containers: $RUNNING_COUNT"
 
             if [ "$RUNNING_COUNT" -eq 0 ]; then
+              echo "No containers running. Bring up full stack."
               sudo docker compose -f "$STACK_FILE" up -d
             else
-              echo "Running containers detected ($RUNNING_COUNT). Skipping full stack up."
+              echo "Partial update for service: $SERVICE"
+              sudo docker compose -f "$STACK_FILE" pull "$SERVICE" --ignore-pull-failures
+              sudo docker compose -f "$STACK_FILE" up -d --force-recreate "$SERVICE"
             fi
 
-            # 5) 안 쓰는 이미지 정리
+            # 4) 안 쓰는 이미지 정리
             sudo docker image prune -f
-
+            
 
   deploy-production:
     needs: build-docker-image
@@ -178,18 +178,18 @@ jobs:
             SERVICE="app-prod"
             echo "Deploy target service: $SERVICE"
 
-            # 3) 업데이트할 서비스만 새 이미지로 교체
-            sudo docker compose -f "$STACK_FILE" pull "$SERVICE" --ignore-pull-failures
-            sudo docker compose -f "$STACK_FILE" up -d --force-recreate "$SERVICE"
-
-            # 4) 만약 스택 전체가 죽어 있다면(컨테이너 0개) → 전체 스택 복구
+            # 3) 현재 컨테이너 수 확인
             RUNNING_COUNT=$(sudo docker compose -f "$STACK_FILE" ps -q | wc -l || echo 0)
+            echo "Running containers: $RUNNING_COUNT"
 
             if [ "$RUNNING_COUNT" -eq 0 ]; then
+              echo "No containers running. Bring up full stack."
               sudo docker compose -f "$STACK_FILE" up -d
             else
-              echo "Running containers detected ($RUNNING_COUNT). Skipping full stack up."
+              echo "Partial update for service: $SERVICE"
+              sudo docker compose -f "$STACK_FILE" pull "$SERVICE" --ignore-pull-failures
+              sudo docker compose -f "$STACK_FILE" up -d --force-recreate "$SERVICE"
             fi
 
-            # 5) 안 쓰는 이미지 정리
+            # 4) 안 쓰는 이미지 정리
             sudo docker image prune -f
