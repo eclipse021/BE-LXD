@@ -86,7 +86,7 @@ jobs:
           port: 22
           script: |
             STACK_FILE=~/deploy/docker-compose.prod.yml
-            ENV_FILE=~/deploy/.deploy_color
+            COLOR_FILE=~/deploy/.deploy_color
             NGINX_CONF=/etc/nginx/sites-available/default
 
             echo "[INFO] Start deploy (blue-green)"
@@ -113,16 +113,18 @@ jobs:
             SENTRY_DSN=${{ secrets.SENTRY_DSN }}
             DISCORD_ERROR_WEBHOOK_URL=${{ secrets.DISCORD_ERROR_WEBHOOK_URL }} 
             EOF
-            
-            # COLOR 기본값 없으면 blue로 초기화
-            if ! grep -q '^COLOR=' "$ENV_FILE"; then
-              echo "[INFO] COLOR not found in .env. Initialize COLOR=blue"
-              echo "COLOR=blue" >> "$ENV_FILE"
+          
+
+            # COLOR 파일 없으면 BLUE로 생성
+            if [ ! -f "$COLOR_FILE" ]; then
+              echo "blue" > "$COLOR_FILE"
+              echo "[INFO] No deploy color file found. Initializing with BLUE."
             fi
   
-  
-            . "$ENV_FILE"
+            # COLOR 값 읽기
+            COLOR=$(cat "$COLOR_FILE")
             echo "[INFO] Loaded COLOR=$COLOR"
+
 
             # 현재 컨테이너 수 확인
             RUNNING_COUNT=$(sudo docker compose -f "$STACK_FILE" ps -q | wc -l || echo 0)
@@ -131,7 +133,7 @@ jobs:
             if [ "$RUNNING_COUNT" -eq 0 ]; then
               echo "[INFO] No containers running. Bring up full stack."
               sudo docker compose -f "$STACK_FILE" up -d
-              echo "COLOR=blue" >> "$ENV_FILE"
+              echo "COLOR=blue" >> "$COLOR_FILE"
               echo "[INFO] First deploy done. Keep COLOR=$COLOR (default blue)"
               sudo docker image prune -f
               exit 0
@@ -146,7 +148,7 @@ jobs:
               sudo sed '18s/8080/8081/g' /etc/nginx/sites-available/default
               sudo nginx -s reload
 
-              sed -i 's/^COLOR=.*/COLOR=green/' "$ENV_FILE"
+              echo "green" > "$COLOR_FILE"
 
             elif [ "$COLOR" = "green" ]; then
               echo "color 는 초록색 if 진입"
@@ -157,7 +159,7 @@ jobs:
               sudo sed '18s/8081/8080/g' /etc/nginx/sites-available/default
               sudo nginx -s reload
 
-              sed -i 's/^COLOR=.*/COLOR=blue/' "$ENV_FILE"
+              echo "green" > "$COLOR_FILE"
 
             fi
 
