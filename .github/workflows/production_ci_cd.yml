@@ -145,7 +145,7 @@ jobs:
               sudo docker compose -f "$STACK_FILE" pull "$SERVICE" --ignore-pull-failures
               sudo docker compose -f "$STACK_FILE" up -d --force-recreate "$SERVICE"
 
-              sudo sed '18s/8080/8081/g' /etc/nginx/sites-available/default
+              sudo sed -i '18s/8080/8081/g' /etc/nginx/sites-available/default
               sudo nginx -s reload
 
               echo "green" > "$COLOR_FILE"
@@ -156,7 +156,7 @@ jobs:
               sudo docker compose -f "$STACK_FILE" pull "$SERVICE" --ignore-pull-failures
               sudo docker compose -f "$STACK_FILE" up -d --force-recreate "$SERVICE"
 
-              sudo sed '18s/8081/8080/g' /etc/nginx/sites-available/default
+              sudo sed -i '18s/8081/8080/g' /etc/nginx/sites-available/default
               sudo nginx -s reload
 
               echo "green" > "$COLOR_FILE"
