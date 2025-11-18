@@ -91,7 +91,7 @@ jobs:
 
             echo "[INFO] Start deploy (blue-green)"
 
-            cat <<EOF > "$ENV_FILE"
+            cat <<EOF > ~/deploy/.env
             DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
             DOCKER_REPO=${{ secrets.DOCKER_REPO }}
             DB_URL=${{ secrets.DB_URL }}
