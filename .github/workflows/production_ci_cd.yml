@@ -86,7 +86,7 @@ jobs:
           port: 22
           script: |
             STACK_FILE=~/deploy/docker-compose.prod.yml
-            ENV_FILE=~/deploy/.env
+            ENV_FILE=~/deploy/.deploy_color
             NGINX_CONF=/etc/nginx/sites-available/default
 
             echo "[INFO] Start deploy (blue-green)"
@@ -114,8 +114,14 @@ jobs:
             DISCORD_ERROR_WEBHOOK_URL=${{ secrets.DISCORD_ERROR_WEBHOOK_URL }} 
             EOF
             
-            #COLOR을 환경변수에서 안전하게 꺼내오는 코드
-            COLOR=$(grep '^COLOR=' "$ENV_FILE" | cut -d '=' -f2)
+            # COLOR 기본값 없으면 blue로 초기화
+            if ! grep -q '^COLOR=' "$ENV_FILE"; then
+              echo "[INFO] COLOR not found in .env. Initialize COLOR=blue"
+              echo "COLOR=blue" >> "$ENV_FILE"
+            fi
+  
+  
+            . "$ENV_FILE"
             echo "[INFO] Loaded COLOR=$COLOR"
 
             # 현재 컨테이너 수 확인
