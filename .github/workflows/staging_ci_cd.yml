@@ -112,22 +112,6 @@ jobs:
             DISCORD_ERROR_WEBHOOK_URL=${{ secrets.DISCORD_ERROR_WEBHOOK_URL }} 
             EOF
 
-            # 2) 업데이트 할 서비스명
-            SERVICE="app-dev"
-            echo "Deploy target service: $SERVICE"
-
-            # 3) 현재 컨테이너 수 확인
-            RUNNING_COUNT=$(sudo docker compose -f "$STACK_FILE" ps -q | wc -l || echo 0)
-            echo "Running containers: $RUNNING_COUNT"
-
-            if [ "$RUNNING_COUNT" -eq 0 ]; then
-              echo "No containers running. Bring up full stack."
-              sudo docker compose -f "$STACK_FILE" up -d
-            else
-              echo "Partial update for service: $SERVICE"
-              sudo docker compose -f "$STACK_FILE" pull "$SERVICE" --ignore-pull-failures
-              sudo docker compose -f "$STACK_FILE" up -d --force-recreate "$SERVICE"
-            fi
-
-            # 4) 안 쓰는 이미지 정리
-            sudo docker image prune -f
+            sudo docker compose -f ~/deploy/docker-compose.yml down
+            sudo docker compose -f ~/deploy/docker-compose.yml pull --ignore-pull-failures
+            sudo docker compose -f ~/deploy/docker-compose.yml up -d --force-recreate

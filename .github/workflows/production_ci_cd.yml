@@ -86,9 +86,12 @@ jobs:
           port: 22
           script: |
             STACK_FILE=~/deploy/docker-compose.prod.yml
+            ENV_FILE=~/deploy/.env
+            NGINX_CONF=/etc/nginx/sites-available/default
 
-            # 1) env 파일 생성
-            cat <<EOF > ~/deploy/.env
+            echo "[INFO] Start deploy (blue-green)"
+
+            cat <<EOF > "$ENV_FILE"
             DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
             DOCKER_REPO=${{ secrets.DOCKER_REPO }}
             DB_URL=${{ secrets.DB_URL }}
@@ -111,22 +114,48 @@ jobs:
             DISCORD_ERROR_WEBHOOK_URL=${{ secrets.DISCORD_ERROR_WEBHOOK_URL }} 
             EOF
 
-            # 2) 업데이트 할 서비스명
-            SERVICE="app-prod"
-            echo "Deploy target service: $SERVICE"
-
-            # 3) 현재 컨테이너 수 확인
-            RUNNING_COUNT=$(sudo docker compose -f "$STACK_FILE" ps -q | wc -l || echo 0)
-            echo "Running containers: $RUNNING_COUNT"
-
-            if [ "$RUNNING_COUNT" -eq 0 ]; then
-              echo "No containers running. Bring up full stack."
-              sudo docker compose -f "$STACK_FILE" up -d
-            else
-              echo "Partial update for service: $SERVICE"
-              sudo docker compose -f "$STACK_FILE" pull "$SERVICE" --ignore-pull-failures
-              sudo docker compose -f "$STACK_FILE" up -d --force-recreate "$SERVICE"
+            # COLOR 기본값 없으면 blue로 초기화
+            if ! grep -q '^COLOR=' "$ENV_FILE"; then
+              echo "[INFO] COLOR not found in .env. Initialize COLOR=blue"
+              echo "COLOR=blue" >> "$ENV_FILE"
             fi
 
-            # 4) 안 쓰는 이미지 정리
-            sudo docker image prune -f
+            . "$ENV_FILE"      
+
+            echo "[INFO] Loaded COLOR=$COLOR"
+
+            # 현재 컨테이너 수 확인
+            RUNNING_COUNT=$(sudo docker compose -f "$STACK_FILE" ps -q | wc -l || echo 0)
+            echo "[INFO] Running containers: $RUNNING_COUNT"
+
+            if [ "$RUNNING_COUNT" -eq 0 ]; then
+              echo "[INFO] No containers running. Bring up full stack."
+              sudo docker compose -f "$STACK_FILE" up -d
+              echo "[INFO] First deploy done. Keep COLOR=$COLOR (default blue)"
+              sudo docker image prune -f
+              exit 0
+            fi
+
+            if [ "$COLOR" = "blue" ]; then
+              SERVICE="app-green"
+              sudo docker compose -f "$STACK_FILE" pull "$SERVICE" --ignore-pull-failures
+              sudo docker compose -f "$STACK_FILE" up -d --force-recreate "$SERVICE"
+
+              sudo sed -i 's|\(proxy_pass http://[^:]*:\)8080;|\18081;|' "$NGINX_CONF"
+              sudo nginx -s reload
+
+              sed -i 's/^COLOR=.*/COLOR=green/' "$ENV_FILE"
+
+            elif [ "$COLOR" = "green" ]; then
+              SERVICE="app-blue"
+              sudo docker compose -f "$STACK_FILE" pull "$SERVICE" --ignore-pull-failures
+              sudo docker compose -f "$STACK_FILE" up -d --force-recreate "$SERVICE"
+
+              sudo sed -i 's|\(proxy_pass http://[^:]*:\)8081;|\18080;|' "$NGINX_CONF"
+              sudo nginx -s reload
+
+              sed -i 's/^COLOR=.*/COLOR=blue/' "$ENV_FILE"
+
+            fi
+
+            sudo docker image prune -f 
