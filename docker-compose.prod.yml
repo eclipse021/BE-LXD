@@ -1,6 +1,6 @@
 version: "3.8"
 services:
-  app-dev:
+  app-blue:
     image: ${DOCKER_USERNAME}/${DOCKER_REPO}
     pull_policy: always
     ports:
@@ -26,7 +26,6 @@ services:
       SENTRY_DSN: ${SENTRY_DSN}
       DISCORD_ERROR_WEBHOOK_URL: ${DISCORD_ERROR_WEBHOOK_URL}
       hibernate_ddl_auto: update
-      JAVA_TOOL_OPTIONS: "-Xmx160m"
     depends_on:
       redis:
         condition: service_healthy
@@ -34,7 +33,7 @@ services:
        - app-network
     restart: always
 
-  app-prod:
+  app-green:
     image: ${DOCKER_USERNAME}/${DOCKER_REPO}
     pull_policy: always
     ports:
@@ -60,7 +59,6 @@ services:
       SENTRY_DSN: ${SENTRY_DSN}
       DISCORD_ERROR_WEBHOOK_URL: ${DISCORD_ERROR_WEBHOOK_URL}
       hibernate_ddl_auto: update
-      JAVA_TOOL_OPTIONS: "-Xmx192m"
     depends_on:
       redis:
         condition: service_healthy
