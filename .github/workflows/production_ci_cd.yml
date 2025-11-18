@@ -96,7 +96,7 @@ jobs:
             DOCKER_REPO=${{ secrets.DOCKER_REPO }}
             DB_URL=${{ secrets.DB_URL }}
             DB_USERNAME=${{ secrets.DB_USERNAME }}
-            DB_PWD="${{ secrets.DB_PWD }}"
+            DB_PWD=${{ secrets.DB_PWD }}
             JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
             JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }}
             JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
@@ -132,21 +132,23 @@ jobs:
             fi
 
             if [ "$COLOR" = "blue" ]; then
+              echo "color 는 파란색 if 진입"
               SERVICE="app-green"
               sudo docker compose -f "$STACK_FILE" pull "$SERVICE" --ignore-pull-failures
               sudo docker compose -f "$STACK_FILE" up -d --force-recreate "$SERVICE"
 
-              sudo sed -i 's|\(proxy_pass http://[^:]*:\)8080;|\18081;|' "$NGINX_CONF"
+              sudo sed '18s/8080/8081/g' /etc/nginx/sites-available/default
               sudo nginx -s reload
 
               sed -i 's/^COLOR=.*/COLOR=green/' "$ENV_FILE"
 
             elif [ "$COLOR" = "green" ]; then
+              echo "color 는 초록색 if 진입"
               SERVICE="app-blue"
               sudo docker compose -f "$STACK_FILE" pull "$SERVICE" --ignore-pull-failures
               sudo docker compose -f "$STACK_FILE" up -d --force-recreate "$SERVICE"
 
-              sudo sed -i 's|\(proxy_pass http://[^:]*:\)8081;|\18080;|' "$NGINX_CONF"
+              sudo sed '18s/8081/8080/g' /etc/nginx/sites-available/default
               sudo nginx -s reload
 
               sed -i 's/^COLOR=.*/COLOR=blue/' "$ENV_FILE"
